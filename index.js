@@ -7,28 +7,21 @@ const REMOVE_GOAL = "REMOVE_GOAL"
 function generateId () {
     return Math.random().toString(36).substring(2) + (new Date()).getTime().toString(36);
 }
-function createStore (reducer) {
 
-	let state 
-	let listeners = []
-	const getState = () => state
-	const subscribe = (listener) => {
-		listeners.push(listener)
-		return () => {
-			listeners = listeners.filter((l) => l != listener)
-		}
-	}
-
-	const dispatch = (action) => {
-		state = reducer(state, action) 
-		listeners.forEach((l) => l())
-	}
-
-	return {
-		getState, 
-		subscribe,
-		dispatch
-	}
+const checker = (store) => (next) => (action) => {
+    if (
+        action.type === ADD_TODO &&
+        action.todo.name.toLowerCase().includes('bitcoin')
+      ) {
+        return alert("Nope. That's a bad idea.")
+      }
+      if (
+        action.type === ADD_GOAL &&
+        action.goal.name.toLowerCase().includes('bitcoin')
+      ) {
+        return alert("Nope. That's a bad idea.")
+      }
+      return next(action)
 }
 
 function addTodoAction (todo) {
@@ -90,13 +83,6 @@ function goals(state = [], action) {
 	}
 }
 
-function app (state = {}, action) {
-	return {
-		todos: todos(state.todos, action),
-		goals: goals(state.goals, action)
-	}
-}
-
 function addTodo () {
 	const input = document.getElementById('todo')
 	const name = input.value 
@@ -121,6 +107,14 @@ function addGoal () {
 	}))
 }
 
+const logger = (store) => (next) => (action) => {
+    console.group(action.type)
+    console.log('The action: ', action)
+    const result = next(action)
+    console.log('The new state: ', store.getState())
+    console.groupEnd()
+    return result
+}
 
 function addTodoToDOM (todo) {
 	const node = document.createElement('li')
@@ -147,8 +141,6 @@ function addGoalToDOM (goal) {
 	document.getElementById('goals').append(node)
 }
 
-
-
 function createRemoveButton (onClick) {
 	const removeBtn = document.createElement('button')
 	removeBtn.innerHTML = 'X'
@@ -156,7 +148,8 @@ function createRemoveButton (onClick) {
 	return removeBtn
 }
 
-const store = createStore(app)
+const store = Redux.createStore(Redux.combineReducers({todos, goals}), Redux.applyMiddleware(checker, logger))
+
 store.subscribe(() => {
 	const { goals, todos } = store.getState()
 
