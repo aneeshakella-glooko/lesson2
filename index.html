@@ -8,6 +8,8 @@
   <script src='https://unpkg.com/babel-standalone@6.15.0/babel.min.js'></script>
   <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://tylermcginnis.com/goals-todos-api/index.js"></script>
+  <script src="https://unpkg.com/redux-thunk@2.2.0/dist/redux-thunk.min.js"></script>
 </head>
 <body>
 	<div id='app'></div>
@@ -35,23 +37,18 @@
 
     class Todos extends React.Component {
       removeItem = (todo) => {
-       this.props.store.dispatch(removeTodoAction(todo.id))
+        this.props.store.dispatch(handleDeleteTodo(todo))
       }
 
       addItem = (e) => {
-        e.preventDefault()
-        const name = this.input.value
-        this.input.value = ''
-
-        this.props.store.dispatch(addTodoAction({
-          name,
-          complete: false,
-          id: generateId()
-        }))
+          e.preventDefault()
+          this.props.store.dispatch(handleAddTodo(this.input.value,
+          () => this.input.value = ''
+        ))
       }
 
       toggleItem = (id) => {
-        this.props.store.dispatch(toggleTodoAction(id))
+        this.props.store.dispatch(handleToggle(id))
       }
 
       render() {
@@ -77,18 +74,14 @@
 
     class Goals extends React.Component {
       removeItem = (goal) => {
-       this.props.store.dispatch(removeGoalAction(goal.id))
+       this.props.store.dispatch(handleDeleteGoal(goal))
       }
 
       addItem = (e) => {
         e.preventDefault()
-        const name = this.input.value
-        this.input.value = ''
-
-        this.props.store.dispatch(addGoalAction({
-          name,
-          id: generateId()
-        }))
+        this.props.store.dispatch(handleAddGoal(this.input.value,
+        () => this.input.value = ''
+      ))
       }
 
       render() {
@@ -114,9 +107,10 @@
     class App extends React.Component {
       componentDidMount () {
         const {store} = this.props
-
+        store.dispatch(handleInitialData())
         store.subscribe(() => this.forceUpdate())
       }
+      
       render() {
         const {store} = this.props
         const { todos, goals } = store.getState()

@@ -3,10 +3,70 @@ const REMOVE_TODO = "REMOVE_TODO"
 const TOGGLE_TODO = "TOGGLE_TODO"
 const ADD_GOAL = "ADD_GOAL"
 const REMOVE_GOAL = "REMOVE_GOAL"
-
+const RECEIVE_DATA = "RECEIVE_DATA"
 function generateId () {
     return Math.random().toString(36).substring(2) + (new Date()).getTime().toString(36);
 }
+
+function handleAddTodo (name, cb) {
+      return (dispatch) => {
+        return API.saveTodo(name)
+          .then((todo) => {
+            dispatch(addTodoAction(todo))
+            cb()
+          })
+          .catch(() => {
+            alert('There was an error. Try again.')
+          })
+      }
+}
+
+function handleInitialData () {
+      return (dispatch) => {
+        return Promise.all([
+          API.fetchTodos(),
+          API.fetchGoals()
+        ]).then(([ todos, goals ]) => {
+          dispatch(receiveDataAction(todos, goals))
+        })
+      }
+    }
+
+function handleToggle (id) {
+    return (dispatch) => {
+      dispatch(toggleTodoAction(id))
+
+      return API.saveTodoToggle(id)
+        .catch(() => {
+          dispatch(toggleTodoAction(id))
+          alert('An error occurred. Try again.')
+        })
+    }
+}
+
+
+function handleAddGoal (name, cb) {
+      return (dispatch) => {
+        return API.saveGoal(name)
+          .then((goal) => {
+            dispatch(addGoalAction(goal))
+            cb()
+          })
+          .catch(() => alert('There was an error. Try again.'))
+      }
+    }
+
+    function handleDeleteGoal (goal) {
+      return (dispatch) => {
+        dispatch(removeGoalAction(goal.id))
+
+        return API.deleteGoal(goal.id)
+          .catch(() => {
+            dispatch(addGoalAction(goal))
+            alert('An error occurred. Try again.')
+          })
+      }
+    }
 
 const checker = (store) => (next) => (action) => {
     if (
@@ -23,6 +83,25 @@ const checker = (store) => (next) => (action) => {
       }
       return next(action)
 }
+function receiveDataAction (todos, goals) {
+  return {
+   type: RECEIVE_DATA,
+   todos,
+   goals,
+ }
+}
+
+function handleDeleteTodo (todo) {
+     return (dispatch) => {
+       dispatch(removeTodoAction(todo.id))
+
+       return API.deleteTodo(todo.id)
+         .catch(() => {
+           dispatch(addTodoAction(todo))
+           alert('An error occurred. Try again.')
+         })
+     }
+   }
 
 function addTodoAction (todo) {
 	return {
@@ -67,7 +146,9 @@ function todos(state = [], action) {
 			return state.filter((todo) => todo.id != action.id)
 		case TOGGLE_TODO :
 			return state.map((todo) => todo.id != action.id ? todo: Object.assign({}, todo, {complete: !todo.complete}))
-		 default:
+    case RECEIVE_DATA:
+      return action.todos
+     default:
 			return state
 	}
 }
@@ -78,7 +159,9 @@ function goals(state = [], action) {
 			return state.concat([action.goal])
 		case REMOVE_GOAL :
 			return state.filter((goal) => goal.id != action.id)
-		 default:
+    case RECEIVE_DATA:
+      return action.goals
+    default:
 			return state
 	}
 }
@@ -92,4 +175,4 @@ const logger = (store) => (next) => (action) => {
     return result
 }
 
-const store = Redux.createStore(Redux.combineReducers({todos, goals}), Redux.applyMiddleware(checker, logger))
+const store = Redux.createStore(Redux.combineReducers({todos, goals}), Redux.applyMiddleware(ReduxThunk.default, checker, logger))
