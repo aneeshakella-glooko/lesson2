@@ -26,35 +26,35 @@ const checker = (store) => (next) => (action) => {
 
 function addTodoAction (todo) {
 	return {
-		type: ADD_TODO, 
+		type: ADD_TODO,
 		todo,
 	}
 }
 
 function removeTodoAction (id) {
 	return {
-		type: REMOVE_TODO, 
+		type: REMOVE_TODO,
 		id,
 	}
 }
 
 function toggleTodoAction (id) {
 	return {
-		type: TOGGLE_TODO, 
+		type: TOGGLE_TODO,
 		id
 	}
 }
 
 function addGoalAction (goal) {
 	return {
-		type : ADD_GOAL, 
-		goal, 
+		type : ADD_GOAL,
+		goal,
 	}
 }
 
 function removeGoalAction (id) {
 	return {
-		type: REMOVE_GOAL, 
+		type: REMOVE_GOAL,
 		id
 	}
 }
@@ -83,30 +83,6 @@ function goals(state = [], action) {
 	}
 }
 
-function addTodo () {
-	const input = document.getElementById('todo')
-	const name = input.value 
-	input.value = ''
-
-	store.dispatch(addTodoAction({
-		name, 
-		complete: false,
-		id: generateId()
-
-	}))
-}
-
-function addGoal () {
-	const input = document.getElementById('goal')
-	const name = input.value 
-	input.value = ''
-
-	store.dispatch(addGoalAction({
-		id: generateId(),
-		name
-	}))
-}
-
 const logger = (store) => (next) => (action) => {
     console.group(action.type)
     console.log('The action: ', action)
@@ -116,48 +92,4 @@ const logger = (store) => (next) => (action) => {
     return result
 }
 
-function addTodoToDOM (todo) {
-	const node = document.createElement('li')
-	const text = document.createTextNode(todo.name)
-
-	const removeBtn = createRemoveButton( () => {
-		store.dispatch(removeTodoAction(todo.id))
-	})
-
-	node.appendChild(text)
-	node.appendChild(removeBtn)
-
-	document.getElementById('todos').append(node)
-	node.style.textDecoration = todo.complete ? 'line-through' : 'none'
-	node.addEventListener('click', () => {
-		store.dispatch(toggleTodoAction(todo.id))
-	})
-}
-
-function addGoalToDOM (goal) {
-	const node = document.createElement('li')
-	const text = document.createTextNode(goal.name)
-	node.appendChild(text)
-	document.getElementById('goals').append(node)
-}
-
-function createRemoveButton (onClick) {
-	const removeBtn = document.createElement('button')
-	removeBtn.innerHTML = 'X'
-	removeBtn.addEventListner('click', onClick)
-	return removeBtn
-}
-
 const store = Redux.createStore(Redux.combineReducers({todos, goals}), Redux.applyMiddleware(checker, logger))
-
-store.subscribe(() => {
-	const { goals, todos } = store.getState()
-
-	document.getElementById('goals').innerHTML = ''
-	document.getElementById('todos').innerHTML = ''
-	goals.forEach(addGoalToDOM)
-	todos.forEach(addTodoToDOM)
-})
-
-document.getElementById('todoBtn').addEventListener('click', addTodo)
-document.getElementById('goalBtn').addEventListener('click', addGoal)
